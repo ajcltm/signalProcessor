@@ -1,18 +1,44 @@
 import sys
 parentPath='c:/Users/ajcltm/PycharmProjects/signalProcessor' # parent 경로
 sys.path.append(parentPath) # 경로 추가
-from emitter import Emitter
-from receiver import Receiver
+from abc import ABC, abstractclassmethod
+from datetime import datetime
+from emitter import Emitter, BTAlgoEmitter
+from receiver import Receiver, BTAlgoReceiver
+from users import User, I
 
-class Processor:
-    
-    def __init__(self, emitter:Emitter, receiver:Receiver):
+class Processor(ABC):
+    def __init__(self, emitter:Emitter, receiver:Receiver, user:User, dataProvider) -> None:
         self.emitter = emitter
         self.receiver = receiver
+        self.user = user
+        self.receiver.receive(user.strategy)
+        self.dataProvider = dataProvider
+        
+    @abstractclassmethod
+    def execute(self):
+        self.emitter.emit()
+
+class BTAlgo(Processor):
+    def __init__(self, emitter:Emitter, receiver:Receiver, user:User) -> None:
+        self.emitter = emitter
+        self.receiver = receiver
+        self.user = user
         self.receiver.receive()
     
     def execute(self):
         self.emitter.emit()
+
+class BTAlgoFactory:
+    def __init__(self, user:User, start:datetime, end:datetime):
+        sp = signal('BTAlgo')
+        r = BTAlgoReceiver(signal=sp, strategy=user.strategy)
+        e = BTAlgoEmitter(signal=sp, start=start, end=end)
+
+        self.BTAlgo = BTAlgo(emitter=e, receiver=r, user=user)
+
+    def execute(self):
+        self.BTAlgo.execute()
 
 
 if __name__ == '__main__':
@@ -21,21 +47,8 @@ if __name__ == '__main__':
     sys.path.append(parentPath) # 경로 추가
     from datetime import datetime
     from blinker import signal
-    from signalProcessor import receiver, emitter, processor
-
-    class I:
-        def __init__(self, ticker):
-            self.ticker = ticker
-
-        def strategy(self, sender, **kwargs):
-            idx = kwargs['idx']
-            date = kwargs['date']
-            print(idx, date, self.ticker)
-
-    sp = signal('BTAlgo')
-
-    r = receiver.BTAlgoReceiver(signal=sp, strategy=I('NVDA').strategy)
+    from users import User, I
+    
     start, end = datetime(2022, 4, 1), datetime(2022, 4, 19)
-    e = emitter.BTAlgoEmitter(signal=sp, start=start, end=end)
-
-    processor.Processor(emitter=e, receiver=r).execute()
+    
+    BTAlgoFactory(user=I('NVDA'), start=start, end=end).execute()
