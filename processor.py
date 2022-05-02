@@ -8,16 +8,10 @@ from receiver import Receiver, BTAlgoReceiver
 from users import User, I
 
 class Processor(ABC):
-    def __init__(self, emitter:Emitter, receiver:Receiver, user:User, dataProvider) -> None:
-        self.emitter = emitter
-        self.receiver = receiver
-        self.user = user
-        self.receiver.receive(user.strategy)
-        self.dataProvider = dataProvider
         
     @abstractclassmethod
     def execute(self):
-        self.emitter.emit()
+        pass
 
 class BTAlgo(Processor):
     def __init__(self, emitter:Emitter, receiver:Receiver, user:User) -> None:
@@ -32,13 +26,12 @@ class BTAlgo(Processor):
 class BTAlgoFactory:
     def __init__(self, user:User, start:datetime, end:datetime):
         sp = signal('BTAlgo')
-        r = BTAlgoReceiver(signal=sp, strategy=user.strategy)
-        e = BTAlgoEmitter(signal=sp, start=start, end=end)
+        self.__u = user
+        self.__r = BTAlgoReceiver(signal=sp, strategy=user.strategy)
+        self.__e = BTAlgoEmitter(signal=sp, start=start, end=end)
 
-        self.BTAlgo = BTAlgo(emitter=e, receiver=r, user=user)
-
-    def execute(self):
-        self.BTAlgo.execute()
+    def get_processor(self) -> Processor:
+        return BTAlgo(emitter=self.__e, receiver=self.__r, user=self.__u)
 
 
 if __name__ == '__main__':
@@ -51,4 +44,5 @@ if __name__ == '__main__':
     
     start, end = datetime(2022, 4, 1), datetime(2022, 4, 19)
     
-    BTAlgoFactory(user=I('NVDA'), start=start, end=end).execute()
+    bt_algo = BTAlgoFactory(user=I('NVDA'), start=start, end=end).get_processor()
+    bt_algo.execute()

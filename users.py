@@ -1,9 +1,16 @@
-from typing import Protocol
+from abc import ABC, abstractclassmethod
 
-class User(Protocol):
+class IUser(ABC):
 
+    @abstractclassmethod
     def strategy(self):
         ...
+
+
+class User(IUser):
+
+    broker : 
+    account : 
 
 class I:
     def __init__(self, ticker):
