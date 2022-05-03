@@ -1,3 +1,8 @@
+import sys
+parentPath='c:/Users/ajcltm/PycharmProjects/signalProcessor' # parent 경로
+sys.path.append(parentPath) # 경로 추가
+import transactionModels as tm
+
 from abc import ABC, abstractclassmethod
 
 class IBroker(ABC):
@@ -13,19 +18,13 @@ class IBroker(ABC):
 
 class GoodBroker:
 
-    def __init__(self, bank:dict):
+    def __init__(self, banker):
 
-        self.bank = bank
-        self.assets = {}
+        self.banker = banker
+        self.assets_transaction = []
 
-    def set_(self, sender, **kwargs):
-        self.idx = kwargs['idx']
-        self.date = kwargs['date']
-
-    def order(self, ticker:str, price:float, quantity:int):
-        if not ticker in self.assets:
-            self.assets[ticker] = []
-        self.assets[ticker].append({'price':price, 'quantity':quantity})
-        self.bank.regiser('broker', price*quantity)
+    def order(self, date, ticker:str, price:float, quantity:int):
+        self.assets_transaction.append(tm.assets_transaction(date=date, ticker=ticker, price=price, quantity=quantity))
+        self.banker.register(date, name='broker', amounts=price*quantity*(-1))
 
 

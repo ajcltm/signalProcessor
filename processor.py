@@ -5,7 +5,7 @@ from abc import ABC, abstractclassmethod
 from datetime import datetime
 from emitter import Emitter, BTAlgoEmitter
 from receiver import Receiver, BTAlgoReceiver
-from users import User, I
+from users import User
 
 class Processor(ABC):
         
@@ -40,9 +40,13 @@ if __name__ == '__main__':
     sys.path.append(parentPath) # 경로 추가
     from datetime import datetime
     from blinker import signal
-    from users import User, I
+    from users import User
+    import pandas as pd
     
     start, end = datetime(2022, 4, 1), datetime(2022, 4, 19)
     
-    bt_algo = BTAlgoFactory(user=I('NVDA'), start=start, end=end).get_processor()
+    bt_algo = BTAlgoFactory(user=User('NVDA'), start=start, end=end).get_processor()
     bt_algo.execute()
+    print(pd.DataFrame(bt_algo.user.broker.assets_transaction))
+    print(pd.DataFrame(bt_algo.user.banker.account.cash_transaction))
+    print(bt_algo.user.banker.account.cash)

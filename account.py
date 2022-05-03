@@ -1,24 +1,19 @@
-class Back :
-    transaction = []
+from typing import Protocol
 
-    def __init__(self, account):
-        self.account = account
+class IAccount(Protocol):
 
-    def register(self, name, amount):
-        self.transaction.append((name, amount))
+    def deposit(self):
+        ...
 
-    def compute(self):
-
-        for i in self.transaction:
-            if i[1] >= 0:
-                self.account.deposit
+    def withdraw(self):
+        ...
 
 
 class Account:
 
     def __init__(self) -> None:
         self.cash = 0
-        self.transaction = []
+        self.cash_transaction = []
 
     def deposit(self, amount:int):
         self.cash += amount
@@ -26,4 +21,4 @@ class Account:
     def withdraw(self, amount:int):
         if amount > self.cash:
             raise ValueError("Insufficient funds")
-        self.cash
+        self.cash -= amount
