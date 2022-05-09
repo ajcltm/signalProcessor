@@ -1,5 +1,3 @@
-from lib2to3.pgen2.pgen import DFAState
-from locale import D_FMT
 import sys
 parentPath='c:/Users/ajcltm/PycharmProjects/signalProcessor' # parent 경로
 sys.path.append(parentPath) # 경로 추가
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     from dataProvider import DataProvider, YahooProvider
     import pandas as pd
     
-    start, end = datetime(2022, 4, 1), datetime(2022, 4, 19)
+    start, end = datetime(2005, 4, 1), datetime(2022, 4, 19)
     tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
     dataProvider = YahooProvider(ticker=tickerLst, start=start, end=end)
     bt_algo = BTAlgoFactory(user=User(dataProvider)).get_processor()
@@ -56,7 +54,10 @@ if __name__ == '__main__':
     print(pd.DataFrame(bt_algo.user.broker.assets_transaction))
     print(pd.DataFrame(bt_algo.user.banker.account.cash_transaction))
     print(bt_algo.user.banker.account.cash)
-    s = Secratary(dataProvider)
-    df = s.get_assets_values(bt_algo.user.broker.assets_transaction)
-    print(df)
+    bt_algo.user.set_secretary()
+    print(bt_algo.user.secretary.get_funding_table())
+    print(bt_algo.user.secretary.get_cash_table())
+    print(bt_algo.user.secretary.get_assets_table())
+    print(bt_algo.user.secretary.get_portfolio_table())
+
 
