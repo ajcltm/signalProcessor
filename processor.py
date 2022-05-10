@@ -45,10 +45,15 @@ if __name__ == '__main__':
     from secretary import Secratary
     from dataProvider import DataProvider, YahooProvider
     import pandas as pd
-    
+    import FinanceDataReader as fdr
+
+    df_spx = fdr.StockListing('S&P500')
+    # print(df_spx)
+    tickerLst = df_spx.Symbol.to_list()
     start, end = datetime(2005, 4, 1), datetime(2022, 4, 19)
-    tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
-    dataProvider = YahooProvider(ticker=tickerLst, start=start, end=end)
+    print(tickerLst[:20])
+    # tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
+    dataProvider = YahooProvider(ticker=tickerLst[:20], start=start, end=end)
     bt_algo = BTAlgoFactory(user=User(dataProvider)).get_processor()
     bt_algo.execute()
     print(pd.DataFrame(bt_algo.user.broker.assets_transaction))

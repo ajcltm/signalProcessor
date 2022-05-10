@@ -19,6 +19,6 @@ class Account:
         self.cash += amount
     
     def withdraw(self, amount:int):
-        if amount > self.cash:
-            raise ValueError("Insufficient funds")
+        # if amount > self.cash:
+        #     raise ValueError("Insufficient funds")
         self.cash -= amount

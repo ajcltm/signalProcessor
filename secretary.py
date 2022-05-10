@@ -97,6 +97,10 @@ class AssetsOrganizer:
 
     def get_assets_values_history(self):
         df = pd.DataFrame(self.assets_transaction)
+        
+        df = df.groupby(['date', 'ticker']).sum()
+        df = df.reset_index()
+        print(df)
         df = df.pivot(index='date', columns='ticker', values='quantity')
         df = df.reset_index()
         return df
@@ -113,16 +117,26 @@ class AssetsOrganizer:
     def get_daily_assests_values(self, assets_values_full_history):
         df = assets_values_full_history
         cols = df.columns
+        # df['assets_value'] = 0
+        # price = []
+        # for i in cols:
+        #     if not i == 'date':
+        #         for dic in self.dataProvider.db:
+        #             close = list(dic.values())[0][i]['close']
+        #             price.append(close)
+        #         df[f'{i}_p'] = price
+        #         df['assets_value'] += df[i]*df[f'{i}_p']
+        #         price = []
+                # cols = df.columns
         df['assets_value'] = 0
-        price = []
+        date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
         for i in cols:
             if not i == 'date':
-                for dic in self.dataProvider.db:
-                    close = list(dic.values())[0][i]['close']
-                    price.append(close)
-                df[f'{i}_p'] = price
+                print(i)
+                df_ = pd.merge(left=date_df, right=self.dataProvider.db.loc[i, 'close'], on='date', how='left')
+                df_ = df_.fillna(0)
+                df[f'{i}_p'] = df_['close']
                 df['assets_value'] += df[i]*df[f'{i}_p']
-                price = []
         return df
         
 

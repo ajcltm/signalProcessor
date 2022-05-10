@@ -9,6 +9,9 @@ import secretary
 from abc import ABC, abstractclassmethod
 from datetime import datetime
 
+import FinanceDataReader as fdr
+
+
 class IUser(ABC):
 
     @abstractclassmethod
@@ -27,13 +30,17 @@ class User(IUser):
 
     def strategy(self, sender:str, **kwargs)->None:
         date = kwargs['date']
-        if date == datetime(2005, 3, 31) or date == datetime(2022, 4, 6):
+        if date == datetime(2005,4, 1) or date == datetime(2022, 4, 6):
             self.banker.register(date=date, amounts=50000)
         if date == datetime(2005, 4, 1) or date == datetime(2022, 4, 7):
-            idx = self.dataProvider.get_idx(date)
-            data = self.dataProvider.db[idx]
-            self.broker.order(date=date, ticker='NVDA', price=data[date]['NVDA']['open'], quantity=10)
-            self.broker.order(date=date, ticker='AMZN', price=data[date]['AMZN']['open'], quantity=10)
+            # tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
+            tickerLst = ['MMM', 'AOS', 'ABT', 'ABBV', 'ABMD', 'ACN', 'ATVI', 'ADM', 'ADBE', 'ADP', 'AAP', 'AES', 'AFL', 'A', 'AIG', 'APD', 'AKAM', 'ALK', 'ALB', 'ARE']
+            for i in tickerLst:
+                try:
+                    print('here')
+                    self.broker.order(date=date, ticker=i, price=self.dataProvider.db.at[(i, date), 'open'], quantity=10)
+                except:
+                    print(f'{i} problem...')
     
     def set_secretary(self):
         self.secretary = secretary.Secratary(self.banker.account.cash_transaction, self.broker.assets_transaction, self.dataProvider)

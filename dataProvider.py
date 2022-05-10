@@ -5,6 +5,7 @@ import pandas_datareader.data as pdr
 import yfinance as yf
 from datetime import datetime
 import pandas as pd
+import time
 
 
 class DataProvider(ABC):
@@ -22,11 +23,15 @@ class DataProvider(ABC):
 class YahooProvider(DataProvider):
 
     def __init__(self, ticker:list, start:datetime, end:datetime)->None:
+        s = time.time()
         self.tickerLst = ticker  # ['^KS11', '005930.KS']
         self.start = start
         self.end = end
-        self.db = self.set_db()
-        self.date_universe = [list(i.keys())[0] for i in self.db]
+        # self.db = self.set_db()
+        self.db = self.get_df()
+        self.date_universe = list(self.db.reset_index().date.drop_duplicates().to_dict().values())
+        e = time.time()
+        print(e-s)
 
     def set_db(self):
         __df = self.get_df()
@@ -46,7 +51,7 @@ class YahooProvider(DataProvider):
             row_dict[date][ticker] = {
                 'open':row.get('Open'), 'high':row.get('High'), 'low':row.get('Low'), 'close': row.get('Close'),
                 'adjClose':row.get('Adj Close'), 'volume':row.get('Volume')}
-        return db    
+        return db
 
     def get_df(self):
         yf.pdr_override()
@@ -58,6 +63,9 @@ class YahooProvider(DataProvider):
         __df = pd.concat(dfs)
         __df = __df.reset_index()
         __df = __df.sort_values(by='Date')
+        __df.columns = ['date', 'open', 'high', 'low', 'close', 'adjClose', 'volume', 'ticker']
+        self.date_universe = __df.date.unique().tolist()  # set date universe
+        __df = __df.set_index(['ticker', 'date'])
         return __df
 
     def get_idx(self, date:datetime):
@@ -74,8 +82,11 @@ if __name__ == '__main__':
     tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
     yp = YahooProvider(ticker=tickerLst, start=s, end=e)
     db = yp.db
-    # print(db)
+    print(db)
+    print(db.loc['QLD', 'close'])
+    print(db.at[('QLD', s), 'close'])
+    print(len(yp.date_universe))
 
-    print(db[-1])
-    idx = yp.get_idx(datetime(2022,4,6))
-    print(db[idx])
+    # print(db[-1])
+    # idx = yp.get_idx(datetime(2022,4,6))
+    # print(db[idx])
