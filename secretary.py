@@ -100,7 +100,7 @@ class AssetsOrganizer:
         
         df = df.groupby(['date', 'ticker']).sum()
         df = df.reset_index()
-        print(df)
+        # print(df)
         df = df.pivot(index='date', columns='ticker', values='quantity')
         df = df.reset_index()
         return df
@@ -117,49 +117,12 @@ class AssetsOrganizer:
     def get_daily_assests_values(self, assets_values_full_history):
         df = assets_values_full_history
         cols = df.columns
-        # df['assets_value'] = 0
-        # price = []
-        # for i in cols:
-        #     if not i == 'date':
-        #         for dic in self.dataProvider.db:
-        #             close = list(dic.values())[0][i]['close']
-        #             price.append(close)
-        #         df[f'{i}_p'] = price
-        #         df['assets_value'] += df[i]*df[f'{i}_p']
-        #         price = []
-                # cols = df.columns
         df['assets_value'] = 0
         date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
         for i in cols:
             if not i == 'date':
-                print(i)
-                df_ = pd.merge(left=date_df, right=self.dataProvider.db.loc[i, 'close'], on='date', how='left')
+                df_ = pd.merge(left=date_df, right=self.dataProvider.priceData.loc[i, 'close'], on='date', how='left')
                 df_ = df_.fillna(0)
                 df[f'{i}_p'] = df_['close']
                 df['assets_value'] += df[i]*df[f'{i}_p']
         return df
-        
-
-
-        # _dict = assets_values_full_history.to_dict('records')
-        # container_dict = []
-        # close_dict = []
-        # value = 0
-        # date=None
-        # idx =None
-        # for i in _dict:
-        #     temp = {}
-        #     for key in i.keys():
-        #         if key == 'date':
-        #             date = i[key]
-        #             temp['date'] = date
-        #             idx = self.dataProvider.get_idx(date)
-        #         else :
-        #             close = self.dataProvider.db[idx][date][key]['close']
-        #             value += close * i[key]
-        #             close_dict.append(close)
-        #     temp['value'] = value
-        #     container_dict.append(temp)
-        #     value = 0
-        # df = pd.DataFrame(container_dict)
-        # return df, close_dict

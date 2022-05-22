@@ -6,7 +6,6 @@ from datetime import datetime
 from emitter import Emitter, BTAlgoEmitter
 from receiver import Receiver, BTAlgoReceiver
 from users import User
-from dataProvider import DataProvider
 
 class Processor(ABC):
         
@@ -41,28 +40,43 @@ if __name__ == '__main__':
     sys.path.append(parentPath) # 경로 추가
     from datetime import datetime
     from blinker import signal
-    from users import User
+    from users import User, SmallInvester
     from secretary import Secratary
-    from dataProvider import DataProvider, YahooProvider
+    from dataProvider import FDataProvider, YahooOHLCV, KrxOHLCV, krxNOShare
     import pandas as pd
     import FinanceDataReader as fdr
 
-    df_spx = fdr.StockListing('S&P500')
+    # df_spx = fdr.StockListing('S&P500')
     # print(df_spx)
-    tickerLst = df_spx.Symbol.to_list()
-    start, end = datetime(2005, 4, 1), datetime(2022, 4, 19)
-    print(tickerLst[:20])
+    # tickerLst = df_spx.Symbol.to_list()
+    # start, end = datetime(2005, 4, 1), datetime(2022, 4, 19)
+    # print(tickerLst[:20])
     # tickerLst = ['QLD', 'NVDA', 'AMZN', 'ARVL']
-    dataProvider = YahooProvider(ticker=tickerLst[:20], start=start, end=end)
-    bt_algo = BTAlgoFactory(user=User(dataProvider)).get_processor()
+    # dataProvider = YahooProvider(ticker=tickerLst[:20], start=start, end=end)
+    # bt_algo = BTAlgoFactory(user=User(dataProvider)).get_processor()
+    # bt_algo.execute()
+    # print(pd.DataFrame(bt_algo.user.broker.assets_transaction))
+    # print(pd.DataFrame(bt_algo.user.banker.account.cash_transaction))
+    # print(bt_algo.user.banker.account.cash)
+    # bt_algo.user.set_secretary()
+    # print(bt_algo.user.secretary.get_funding_table())
+    # print(bt_algo.user.secretary.get_cash_table())
+    # print(bt_algo.user.secretary.get_assets_table())
+    # print(bt_algo.user.secretary.get_portfolio_table())
+
+    kohlcv = KrxOHLCV(sqlToParquet=False)
+    knos = krxNOShare(sqlToParquet=False)
+    fdp = FDataProvider()
+    fdp.register(data=kohlcv, dataTitle='priceData')
+    fdp.register(data=knos, dataTitle='nSharesData')
+    dataProvider = fdp.get_data()
+    bt_algo = BTAlgoFactory(user=SmallInvester(dataProvider)).get_processor()
     bt_algo.execute()
-    print(pd.DataFrame(bt_algo.user.broker.assets_transaction))
-    print(pd.DataFrame(bt_algo.user.banker.account.cash_transaction))
-    print(bt_algo.user.banker.account.cash)
     bt_algo.user.set_secretary()
     print(bt_algo.user.secretary.get_funding_table())
     print(bt_algo.user.secretary.get_cash_table())
     print(bt_algo.user.secretary.get_assets_table())
     print(bt_algo.user.secretary.get_portfolio_table())
+
 
 

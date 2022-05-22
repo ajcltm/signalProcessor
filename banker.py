@@ -6,8 +6,8 @@ import transactionModels as tm
 
 class Banker :
 
-    def create_account(self) -> None:
-        self.account = account.Account()
+    def create_account(self, limit=None) -> None:
+        self.account = account.Account(limit)
 
     def register(self, date, amounts, name='kim'):
         self.account.cash_transaction.append(tm.cash_transaction(date=date, offer=name, amounts=amounts))

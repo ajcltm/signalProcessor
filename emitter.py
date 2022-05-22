@@ -1,6 +1,7 @@
 from typing import Protocol, Callable
 from datetime import datetime, timedelta
 from blinker import signal
+from tqdm import tqdm
 
 class Emitter(Protocol):
     
@@ -17,5 +18,5 @@ class BTAlgoEmitter:
         self.date_universe = date_universe
 
     def emit(self) -> None:
-        for idx, date in enumerate(self.date_universe):
+        for date in tqdm(self.date_universe):
             self.signalProcessor.send('anonymous', date=date)

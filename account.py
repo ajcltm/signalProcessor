@@ -11,7 +11,8 @@ class IAccount(Protocol):
 
 class Account:
 
-    def __init__(self) -> None:
+    def __init__(self, limit=None) -> None:
+        self.limit = limit
         self.cash = 0
         self.cash_transaction = []
 
@@ -19,6 +20,6 @@ class Account:
         self.cash += amount
     
     def withdraw(self, amount:int):
-        # if amount > self.cash:
-        #     raise ValueError("Insufficient funds")
+        if self.limit:
+            assert amount - self.cash > self.limit, "You cannot withdraw cash over limit."
         self.cash -= amount
