@@ -1,9 +1,11 @@
-import sys
-from pathlib import Path
-sys.path.append(Path.cwd().joinpath('signalProcessor'))
-import data, query
+from dataProvider import data, query
 import dataclasses
 from datetime import datetime
+
+import sys
+from pathlib import Path
+sys.path.append(str(Path.cwd()))
+from utility import time
 
 class FDataProvider:
 
@@ -19,16 +21,15 @@ class FDataProviders:
     def register(self, dataProvider, name):
         self.set_dict[name] = dataProvider
 
-    def get_dataProviders(self, date_universe_data='priceData'):
-        parent_class = dataclasses.make_dataclass('parent_class', ['date_universe'])
-        dc = dataclasses.make_dataclass('dataProvider', list(self.set_dict.keys()), bases=(parent_class,))
-        date_universe = list(self.set_dict[date_universe_data].data.reset_index().date.drop_duplicates().to_dict().values())
-        return dc(**dict({'date_universe':date_universe}, **self.set_dict))
+    def get_dataProviders(self):
+        dc = dataclasses.make_dataclass('dataProvider', list(self.set_dict.keys()))
+        return dc(**self.set_dict)
 
 
 # application
 class AKrxKospiDataProviders:
 
+    @time.timeMeasure
     def get_dataProviders(self):
         fdps = FDataProviders()
 
@@ -41,7 +42,7 @@ class AKrxKospiDataProviders:
         # n of shares dataProvider
         nOfSharesDataProvider = FDataProvider(data = data.KrxKospiNOShare(), query=query.FNOfSharesQuery().get_query('parquet'))
         fdps.register(priceDataProvider, 'priceData')
-        fdps.register(nOfSharesDataProvider, 'nOfShares')
+        fdps.register(nOfSharesDataProvider, 'nOfSharesData')
 
         return fdps.get_dataProviders()
 
@@ -79,8 +80,10 @@ class SParquetKrxKospiYahooCombineDataProviders:
 
 if __name__ == '__main__':
     from datetime import datetime
+    import time
     dataProvider=AKrxKospiDataProviders().get_dataProviders()
-    print(dataProvider.priceData.data.tail())
-    print(dataProvider.priceData.query.get_by_date(date=datetime(2022, 4, 1)))
-    print(dataProvider.nOfShares.query.get_by_date(date=datetime(2022, 5, 3)))
-    print(dataProvider.date_universe[-10:])
+    s = time.time()
+    df=dataProvider.priceData.data.reset_index()
+    print(df.pivot(index='date', columns='ticker', values='close').iloc[-10:,-5:])
+    e = time.time()
+    print(f'{e-s:0.4f}')

@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path.cwd()))
 from Isql import connect, execute
-
+from utility import time
 from typing import Protocol
 from datetime import datetime
 import pandas as pd
@@ -114,6 +114,6 @@ class KrxKospiNOShare:
 
 
 if __name__ == '__main__':
-
+    
     df = KrxKospiOHLCV(save_parquet=False).get_data()
     print(df.head())

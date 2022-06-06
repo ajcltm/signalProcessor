@@ -1,128 +1,35 @@
 import pandas as pd
 
-class Secratary:
+class Secretary:
 
-    def __init__(self, cash_transaction, assets_transaction, dataProvider):
-        self.cash_transaction = cash_transaction
-        self.assets_transaction = assets_transaction
+    def __init__(self, banker, broker, accountant, advisor, dataProvider, recorder):
+        self.banker = banker
+        self.broker = broker
+        self.accountant = accountant
+        self.advisor = advisor
         self.dataProvider = dataProvider
+        self.recorder = recorder
 
-    def get_funding_table(self):
-        return FundingOrganizer(self.cash_transaction, self.dataProvider).get_table()
-
-    def get_cash_table(self):
-        return CashOrganizer(self.cash_transaction, self.dataProvider).get_table()
-
-    def get_assets_table(self):
-        return AssetsOrganizer(self.assets_transaction, self.dataProvider).get_table()
-
-    def get_portfolio_table(self):
-        funding_table = self.get_funding_table()
-        cash_table = self.get_cash_table()
-        assets_table = self.get_assets_table()[['date', 'assets_value']]
-        df = pd.merge(left=funding_table, right=cash_table, on='date', how='left')
-        df = pd.merge(left=df, right=assets_table, on='date', how='left')
-        df.columns = ['date', 'funding', 'closeCashValue', 'closeAssetsValue']
-        df['closeTotalValue'] = df.closeCashValue + df.closeAssetsValue
-        df['openCashValue'] = df.closeCashValue.shift(1)
-        df['openAssetsValue'] = df.closeAssetsValue.shift(1)
-        df['openTotalValue'] = df.openCashValue + df.openAssetsValue
-        df = df.fillna(0)
-        df = df[['date', 'funding', 'openCashValue', 'closeCashValue', 'openAssetsValue', 'closeAssetsValue', 'openTotalValue', 'closeTotalValue']]
-        df['portfolioReturn'] = (df.closeTotalValue) / (df.openTotalValue+df.funding) -1
-        return df
-
-class FundingOrganizer:
-
-    def __init__(self, cash_transaction, dataProvider):
-        self.cash_transaction = cash_transaction
-        self.dataProvider = dataProvider
-
-    def get_table(self):
-        df = self.get_funding_history()
-        df = self.get_funding_full_history(df)
-        return df
-
-    def get_funding_history(self):
-        df = pd.DataFrame(self.cash_transaction)
-        df = df.loc[~(df.loc[:, 'offer']=='broker')]
-        df = df.groupby('date').sum()
-        return df
-
-    def get_funding_full_history(self, funding_history):
-        date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
-        df = pd.merge(left=date_df, right=funding_history, on='date', how='left')
-        df = df.fillna(0)
-        df.columns = ['date','funding']
-        return df
+    def prepareOrder(self):
+        return PrepareOrder(self.broker, self.accountant)
 
 
-class CashOrganizer:
+class PrepareOrder:
 
-    def __init__(self, cash_transaction, dataProvider):
-        self.cash_transaction = cash_transaction
-        self.dataProvider = dataProvider
+    def __init__(self, banker, broker, accountant):
+        self.banker = banker
+        self.broker = broker
+        self.accountant = accountant
 
-    def get_table(self):
-        df = self.get_cash_history()
-        df = self.get_cash_full_history(df)
-        return df
+    def get_order_paper(self, new_tickers_weight):
+        old_orders = self.get_old_orders()
+        if not old_orders:
+            return new_tickers_weight
 
-    def get_cash_history(self):
-        df = pd.DataFrame(self.cash_transaction)
-        df = df.groupby('date').sum()
-        return df
+    def get_old_orders(self):
+        if not self.broker.assets_transaction :
+            return None
+        old_assets = self.accountant.assetsOrganizer.get_assets_values_history().to_dict(orient='records')[0]
+        return old_assets
 
-    def get_cash_full_history(self, cash_history):
-        date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
-        df = pd.merge(left=date_df, right=cash_history, on='date', how='left')
-        df = df.fillna(0)
-        df = df.set_index('date')
-        df = df.loc[:, 'amounts'].cumsum()
-        df = df.reset_index()
-        df.columns = ['date', 'cash_value']
-        return df
 
-class AssetsOrganizer:
-
-    def __init__(self, assets_transaction, dataProvider):
-        self.assets_transaction = assets_transaction
-        self.dataProvider = dataProvider
-
-    def get_table(self):
-        df = self.get_assets_values_history()
-        df = self.get_assets_values_full_history(df)
-        df = self.get_daily_assests_values(df)
-        return df
-
-    def get_assets_values_history(self):
-        df = pd.DataFrame(self.assets_transaction)
-        
-        df = df.groupby(['date', 'ticker']).sum()
-        df = df.reset_index()
-        # print(df)
-        df = df.pivot(index='date', columns='ticker', values='quantity')
-        df = df.reset_index()
-        return df
-
-    def get_assets_values_full_history(self, assets_values_history):
-        date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
-        df = pd.merge(left=date_df, right=assets_values_history, on='date', how='left')
-        df = df.fillna(0)
-        df = df.set_index('date')
-        df = df.cumsum()
-        df = df.reset_index()
-        return df
-
-    def get_daily_assests_values(self, assets_values_full_history):
-        df = assets_values_full_history
-        cols = df.columns
-        df['assets_value'] = 0
-        date_df = pd.DataFrame(self.dataProvider.date_universe, columns=['date'])
-        for i in cols:
-            if not i == 'date':
-                df_ = pd.merge(left=date_df, right=self.dataProvider.priceData.loc[i, 'close'], on='date', how='left')
-                df_ = df_.fillna(0)
-                df[f'{i}_p'] = df_['close']
-                df['assets_value'] += df[i]*df[f'{i}_p']
-        return df
