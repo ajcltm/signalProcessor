@@ -72,19 +72,12 @@ class SmallInvester(IUser):
             smalls = strategy.selector.select(self.recorder.date)
             ticker_weight = strategy.allocator.allocate(smalls, self.recorder.date)
             needMoney = 0
-            self.secretary.prepareOrder().get_old_orders()
-            # if needToSell:
-            #     for ticker in needToSell:
-            #         price = self.dataProvider.priceData.query.get_price_at_tickerAndDate(ticker, self.recorder.date, 'close')
-            #         needMoney -= price
-            #         self.broker.order(self.recorder.date, ticker, price, -1)
-
-            # for ticker in neetToBuy:
-            #     price = self.dataProvider.priceData.query.get_price_at_tickerAndDate(ticker, self.recorder.date, 'close')
-            #     needMoney += price
-            #     self.broker.order(self.recorder.date, ticker, price, 1)
-
-            # if not needMoney == 0:
-            #     self.banker.register(date=self.recorder.date, amounts=needMoney)
-            # self.recorder.oldSmalls = smalls
+            order_plan = self.secretary.prepareOrder().get_order_plan(ticker_weight, cash=50_000_000)
+            for ticker, amounts in order_plan.items():
+                price = self.dataProvider.priceData.query.get_price_at_tickerAndDate(ticker, self.recorder.date, 'close')
+                needMoney += price*amounts
+                self.broker.order(self.recorder.date, ticker, price, amounts)
+            if not needMoney == 0:
+                self.banker.register(date=self.recorder.date, amounts=needMoney)
+            self.recorder.oldSmalls = smalls
         self.recorder.oldMonth = self.recorder.date.month
